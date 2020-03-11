@@ -1,0 +1,107 @@
+﻿@using ActionsWithMatrix.DTO
+@model MatrixDTO
+
+<style>
+    td {
+        padding: 10px;
+    }
+</style>
+
+<table border="1" rules="all">
+    <tbody>
+        @{
+            int column = 0;
+            int row = 0;
+            foreach (int curr in Model.MatrixType)
+            {
+                column++;
+
+                @if (column == 0)
+                {
+                    @:<tr>
+                    }
+
+                <td style="padding:10px">@curr</td>
+                @if (column == Math.Sqrt(Model.MatrixType.Length))
+                {
+                @:</tr>
+                row++;
+                column = 0;
+            }
+            }
+        }
+    </tbody>
+</table>
+@using (Html.BeginForm("Index", "Matrix", FormMethod.Get, new { id = "import" }))
+{
+    <div class="frame" id="area">
+        <button type="submit"> Import From CSV </button>
+    </div>
+}
+
+@using (Html.BeginForm("Index", "Matrix", FormMethod.Get, new { id = "generate" }))
+{
+    <div class="frame" id="area">
+        <button type="submit">Generate Matrix</button>
+    </div>
+}
+
+@using (Html.BeginForm("Index", "Matrix", FormMethod.Post, new { id = "rotate" }))
+{
+    <div class="frame" id="area">
+        <button type="submit">Rotate Matrix</button>
+    </div>
+}
+
+
+@section Scripts {
+    <script>
+        function outputMatrix(data) {
+            $("tbody tr").remove();
+            data.map(function (matrix, i) {
+                $("tbody").append("<tr data-row='" + i + "'>");
+                matrix.map(function (line) {
+                    $("tbody tr[data-row=" + i + "]").append("<td>" + line + "</td>");
+                });
+                $("tbody").prepend("</tr>");
+            });
+        }
+        
+        $(window).ready(function () {
+                        $("#import").submit(function (e) {
+                e.preventDefault();
+                $.get("@Url.Action("GetMatrixFromCsv", "Matrix")", function (data) {
+                    if (data) {
+                        console.log(data);
+                        matrix = data;
+                        outputMatrix(data.matrix.matrixType);
+                    }
+                });
+            });
+                 $("#generate").submit(function (e) {
+                     e.preventDefault();
+                    
+                    $.get("@Url.Action("GenerateMatrix", "Matrix")", function (data) {
+                        if (data) {
+                            outputMatrix(data.matrix.matrixType);
+                        }
+                    });
+            });
+
+            $("#rotate").submit(function (e) {
+                e.preventDefault();
+                var array = [];
+                $("tbody tr td").map(function () {
+                    array.push(+$(this).text());
+                });
+                $.post("@Url.Action("GetRotatedMatrix", "Matrix")", {
+                    toarray: array
+                        }, function (data) {
+                        if (data) {
+                            outputMatrix(data.matrix.matrixType);
+                        }
+                    });
+                });
+        });
+    </script>
+}
